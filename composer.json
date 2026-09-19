@@ -11,7 +11,7 @@
     },
     "autoload-dev": {
         "psr-4": {
-            "GymLog\\Test\\Unit\\": "tests/Unit"
+            "GymLog\\Test\\": "tests/"
         }
     },
     "minimum-stability": "stable",

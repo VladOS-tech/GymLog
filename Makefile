@@ -46,3 +46,7 @@ migrate-generate:
 migrate-status:
 	docker compose exec composer ./vendor/bin/doctrine-migrations migrations:status
 
+
+.PHONY: test
+test:
+	docker compose exec composer ./vendor/bin/phpunit --configuration phpunit.xml.dist

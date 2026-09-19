@@ -41,6 +41,11 @@ class WorkoutSet
 
     public function assign(int $weightGrams, int $reps, SetType $type, ?int $restAfterSeconds): void
     {
+        // Завершённая тренировка неизменяема (спека, раздел 6). Проверка нужна именно здесь:
+        // конструктор зовут только из WorkoutExercise::addSet(), где тренировка заведомо активна,
+        // а вот редактирование подхода придёт сюда напрямую из слоя Application.
+        $this->workoutExercise->getWorkout()->assertEditable();
+
         if ($weightGrams < 0) {
             throw new \InvalidArgumentException('Вес не может быть отрицательным.');
         }
