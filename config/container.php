@@ -5,6 +5,7 @@ declare(strict_types=1);
 use Psr\Container\ContainerInterface;
 use Symfony\Component\Config\ConfigCache;
 use Symfony\Component\Config\FileLocator;
+use Symfony\Component\Config\Resource\DirectoryResource;
 use Symfony\Component\DependencyInjection\ContainerBuilder as SymfonyContainerBuilder;
 use Symfony\Component\DependencyInjection\Dumper\PhpDumper;
 use Symfony\Component\DependencyInjection\Loader\XmlFileLoader;
@@ -27,6 +28,11 @@ return static function (
         $container->setParameter('kernel.debug', $debug);
 
         (new XmlFileLoader($container, new FileLocator($projectDir . '/config')))->load('services.xml');
+
+        // Импорт services/*.xml отслеживает только те файлы, что нашлись при компиляции:
+        // Config\Loader\FileLoader::import выбрасывает созданный GlobResource в переменную $_.
+        // Поэтому новый файл в config/services/ кэш сам не заметит — следим за директорией явно.
+        $container->addResource(new DirectoryResource($projectDir . '/config/services', '/\.xml$/'));
 
         // Без резолва env на этапе компиляции: %env(...)% остаются плейсхолдерами,
         // дампнутый контейнер читает их из окружения в рантайме.

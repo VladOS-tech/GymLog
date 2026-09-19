@@ -102,6 +102,60 @@ class Workout
         $this->note = $note;
     }
 
+    /**
+     * Навигация внутрь агрегата: снаружи до WorkoutExercise добираются только так,
+     * репозитория у него нет. Возвращает null, а не бросает: «не найдено» — это случай
+     * прикладного слоя, домену тут нечего решать.
+     */
+    public function findExercise(string $workoutExerciseId): ?WorkoutExercise
+    {
+        foreach ($this->exercises as $workoutExercise) {
+            if ($workoutExercise->getId() === $workoutExerciseId) {
+                return $workoutExercise;
+            }
+        }
+
+        return null;
+    }
+
+    /**
+     * Переупорядочивание упражнений: на вход приходит полный список id в новом порядке,
+     * позиции раздаются 0..n-1.
+     *
+     * Промежуточные дубликаты позиций внутри транзакции допустимы: уникальный констрейнт
+     * workout_exercise_position_uniq объявлен DEFERRABLE INITIALLY DEFERRED и проверяется
+     * на коммите. Ради этого он таким и сделан — иначе пришлось бы сдвигать позиции
+     * во временный диапазон и обратно.
+     *
+     * @param string[] $orderedWorkoutExerciseIds
+     *
+     * @throws WorkoutException если список не совпадает с составом тренировки
+     */
+    public function reorderExercises(array $orderedWorkoutExerciseIds): void
+    {
+        $this->assertEditable();
+
+        $current = $this->exercises->map(
+            static fn (WorkoutExercise $workoutExercise): string => $workoutExercise->getId(),
+        )->toArray();
+
+        $expected = array_values($current);
+        $given = array_values($orderedWorkoutExerciseIds);
+        sort($expected);
+        $sortedGiven = $given;
+        sort($sortedGiven);
+
+        if ($expected !== $sortedGiven) {
+            throw new WorkoutException(
+                'Новый порядок должен содержать ровно те же упражнения, что и тренировка.',
+            );
+        }
+
+        foreach ($given as $position => $workoutExerciseId) {
+            $this->findExercise($workoutExerciseId)?->changePosition($position);
+        }
+    }
+
     private function nextPosition(): int
     {
         $positions = $this->exercises->map(

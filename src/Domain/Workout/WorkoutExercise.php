@@ -52,6 +52,21 @@ class WorkoutExercise
         return $set;
     }
 
+    /**
+     * Навигация внутрь агрегата: репозитория у WorkoutSet нет, добраться до подхода
+     * можно только отсюда.
+     */
+    public function findSet(string $setId): ?WorkoutSet
+    {
+        foreach ($this->sets as $set) {
+            if ($set->getId() === $setId) {
+                return $set;
+            }
+        }
+
+        return null;
+    }
+
     public function changePosition(int $position): void
     {
         $this->workout->assertEditable();

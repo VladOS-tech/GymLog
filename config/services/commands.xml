@@ -1,0 +1,31 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<container xmlns="http://symfony.com/schema/dic/services"
+           xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+           xsi:schemaLocation="http://symfony.com/schema/dic/services http://symfony.com/schema/dic/services/services-1.0.xsd">
+    <services>
+        <defaults autowire="true" public="true"/>
+
+        <!--
+            Хендлеры регистрируются маской: их аргументы — только интерфейсы, для которых
+            в repositories.xml уже объявлены алиасы, поэтому автоваеринг соберёт всё сам.
+            Новый хендлер подхватится без правки этого файла.
+
+            Одна звёздочка, а не две: `**` — расширенный glob, он требует symfony/finder,
+            которого у нас нет. Маска рассчитана на раскладку Commands/<Агрегат>/<X>Handler.php.
+            Если когда-нибудь появится вложенность глубже (Commands/Workout/Async/...),
+            придётся либо добавить сюда ещё строку, либо ставить Finder.
+        -->
+        <prototype namespace="GymLog\Application\Commands\"
+                   resource="../../src/Application/Commands/*/*Handler.php"/>
+
+        <prototype namespace="GymLog\Application\Commands\"
+                   resource="../../src/Application/Commands/*/Services/"/>
+
+        <!-- Единица работы: порт в Application, реализация поверх EntityManager. -->
+        <service id="GymLog\PortAdapters\Secondary\Persistence\Doctrine\DoctrineDomainSession">
+            <argument type="service" id="doctrine.orm.entitymanager"/>
+        </service>
+        <service id="GymLog\Application\Persistence\DomainSession"
+                 alias="GymLog\PortAdapters\Secondary\Persistence\Doctrine\DoctrineDomainSession"/>
+    </services>
+</container>
