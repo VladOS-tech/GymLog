@@ -1,0 +1,10 @@
+/vendor/
+/artifacts
+/.env
+/runtime/Symfony/*/*.php
+/runtime/Symfony/*/*.meta
+/runtime/Symfony/*/*.json
+/runtime/Symfony/*/*.xml
+/compose.override.yaml
+/.idea
+/.claude

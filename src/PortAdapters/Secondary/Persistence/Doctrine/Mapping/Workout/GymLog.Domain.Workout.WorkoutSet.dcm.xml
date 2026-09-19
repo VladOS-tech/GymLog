@@ -1,0 +1,31 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<doctrine-mapping xmlns="http://doctrine-project.org/schemas/orm/doctrine-mapping"
+                  xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+                  xsi:schemaLocation="http://doctrine-project.org/schemas/orm/doctrine-mapping
+                                      https://www.doctrine-project.org/schemas/orm/doctrine-mapping.xsd">
+
+    <!-- Таблица workout_set, а не set: SET — зарезервированное слово SQL. -->
+    <entity name="GymLog\Domain\Workout\WorkoutSet" table="workout_set">
+
+        <indexes>
+            <index name="workout_set_order_index" columns="workout_exercise_id,id"/>
+        </indexes>
+
+        <id name="id" type="string" length="64" column="id">
+            <generator strategy="NONE"/>
+        </id>
+
+        <!-- Вес в граммах: целое. 82.5 кг -> 82500, никакой плавающей точки в БД. -->
+        <field name="weightGrams" type="integer" column="weight_grams" nullable="false"/>
+        <field name="reps" type="smallint" column="reps" nullable="false"/>
+        <field name="type" type="string" length="32" column="type" nullable="false"
+               enum-type="GymLog\Domain\Workout\SetType"/>
+        <field name="restAfterSeconds" type="integer" column="rest_after_seconds" nullable="true"/>
+
+        <many-to-one field="workoutExercise" target-entity="GymLog\Domain\Workout\WorkoutExercise" inversed-by="sets" fetch="LAZY">
+            <join-column name="workout_exercise_id" referenced-column-name="id" nullable="false" on-delete="CASCADE"/>
+        </many-to-one>
+
+    </entity>
+
+</doctrine-mapping>

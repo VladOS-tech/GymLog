@@ -1,0 +1,53 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<doctrine-mapping xmlns="http://doctrine-project.org/schemas/orm/doctrine-mapping"
+                  xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+                  xsi:schemaLocation="http://doctrine-project.org/schemas/orm/doctrine-mapping
+                                      https://www.doctrine-project.org/schemas/orm/doctrine-mapping.xsd">
+
+    <entity name="GymLog\Domain\Workout\WorkoutExercise" table="workout_exercise">
+
+        <indexes>
+            <!-- Под запрос «прошлый раз для этого упражнения» (спека, раздел 3.6). -->
+            <index name="workout_exercise_exercise_id_index" columns="exercise_id"/>
+        </indexes>
+
+        <unique-constraints>
+            <!--
+                Уникальность позиции внутри тренировки. В миграции констрейнт объявлен
+                DEFERRABLE INITIALLY DEFERRED, чтобы переупорядочивание упражнений
+                одной транзакцией не требовало временных значений position.
+            -->
+            <unique-constraint name="workout_exercise_position_uniq" columns="workout_id,position"/>
+        </unique-constraints>
+
+        <id name="id" type="string" length="64" column="id">
+            <generator strategy="NONE"/>
+        </id>
+
+        <field name="position" type="integer" column="position" nullable="false"/>
+        <field name="note" type="text" column="note" nullable="true"/>
+        <field name="restAfterExerciseSeconds" type="integer" column="rest_after_exercise_seconds" nullable="true"/>
+
+        <many-to-one field="workout" target-entity="GymLog\Domain\Workout\Workout" inversed-by="exercises" fetch="LAZY">
+            <join-column name="workout_id" referenced-column-name="id" nullable="false" on-delete="CASCADE"/>
+        </many-to-one>
+
+        <!-- Упражнение только архивируется, физически не удаляется: on-delete RESTRICT. -->
+        <many-to-one field="exercise" target-entity="GymLog\Domain\Exercise\Exercise" fetch="LAZY">
+            <join-column name="exercise_id" referenced-column-name="id" nullable="false" on-delete="RESTRICT"/>
+        </many-to-one>
+
+        <one-to-many field="sets" target-entity="GymLog\Domain\Workout\WorkoutSet" mapped-by="workoutExercise" orphan-removal="true">
+            <cascade>
+                <cascade-persist/>
+                <cascade-remove/>
+            </cascade>
+            <!-- id — монотонный UUIDv7, поэтому это и есть порядок создания подходов. -->
+            <order-by>
+                <order-by-field name="id" direction="ASC"/>
+            </order-by>
+        </one-to-many>
+
+    </entity>
+
+</doctrine-mapping>

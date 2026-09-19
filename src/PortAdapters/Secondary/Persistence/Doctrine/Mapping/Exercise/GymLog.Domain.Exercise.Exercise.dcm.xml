@@ -1,0 +1,39 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<doctrine-mapping xmlns="http://doctrine-project.org/schemas/orm/doctrine-mapping"
+                  xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+                  xsi:schemaLocation="http://doctrine-project.org/schemas/orm/doctrine-mapping
+                                      https://www.doctrine-project.org/schemas/orm/doctrine-mapping.xsd">
+
+    <entity name="GymLog\Domain\Exercise\Exercise" table="exercise">
+
+        <indexes>
+            <!-- Частичный индекс под выборку неархивных упражнений в списке выбора. -->
+            <index name="exercise_active_name_index" columns="name">
+                <options>
+                    <!-- Предикат записан в том виде, в каком его нормализует Postgres:
+                         DBAL сравнивает опцию как строку, иначе migrations:diff вечно
+                         предлагает пересоздать индекс. -->
+                    <option name="where">(is_archived = false)</option>
+                </options>
+            </index>
+        </indexes>
+
+        <unique-constraints>
+            <unique-constraint name="exercise_name_uniq_index" columns="name"/>
+        </unique-constraints>
+
+        <id name="id" type="string" length="64" column="id">
+            <generator strategy="NONE"/>
+        </id>
+
+        <field name="name" type="string" length="255" column="name" nullable="false"/>
+        <field name="isArchived" type="boolean" column="is_archived" nullable="false">
+            <options>
+                <option name="default">false</option>
+            </options>
+        </field>
+        <field name="createdAt" type="datetimetz_immutable" column="created_at" nullable="false"/>
+
+    </entity>
+
+</doctrine-mapping>

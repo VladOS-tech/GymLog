@@ -1,0 +1,37 @@
+services:
+  composer:
+    restart: always
+    build:
+      context: .
+      dockerfile: deploy/fpm/Dockerfile
+      args:
+        - UID=${UID:-1000}
+        - GID=${GID:-1000}
+      target: php-build
+    depends_on:
+      postgres:
+        condition: service_healthy
+    volumes:
+      - .:/www
+    env_file: .env
+    command: "/bin/bash -c 'composer install --no-interaction --optimize-autoloader; while true; do sleep 10; done'"
+  postgres:
+    image: postgres:18-alpine
+    restart: always
+    environment:
+      - POSTGRES_DB=gymlog
+      - POSTGRES_USER=gymlog
+      - POSTGRES_PASSWORD=gymlog
+      - TZ=UTC
+      - PGTZ=UTC
+    healthcheck:
+      test: pg_isready -U gymlog -d gymlog
+      interval: 5s
+      timeout: 5s
+      retries: 10
+    ports:
+      - "8620:5432"
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+volumes:
+  postgres_data:

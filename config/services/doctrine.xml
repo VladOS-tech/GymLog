@@ -1,0 +1,82 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<container xmlns="http://symfony.com/schema/dic/services"
+           xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+           xsi:schemaLocation="http://symfony.com/schema/dic/services http://symfony.com/schema/dic/services/services-1.0.xsd">
+    <parameters>
+        <parameter type="string" key="gymlog.root_dir">%kernel.project_dir%</parameter>
+
+        <parameter type="collection" key="db.psql.connection.master">
+            <parameter type="string" key="driver">pdo_pgsql</parameter>
+            <parameter type="string" key="host">%env(DB_PSQL_CONNECTION_MASTER_HOST)%</parameter>
+            <parameter type="string" key="port">%env(DB_PSQL_CONNECTION_MASTER_PORT)%</parameter>
+            <parameter type="string" key="user">%env(DB_PSQL_CONNECTION_MASTER_USER)%</parameter>
+            <parameter type="string" key="password">%env(DB_PSQL_CONNECTION_MASTER_PASSWORD)%</parameter>
+            <parameter type="string" key="dbname">%env(DB_PSQL_CONNECTION_MASTER_DBNAME)%</parameter>
+            <parameter type="string" key="charset">%env(DB_PSQL_CONNECTION_MASTER_CHARSET)%</parameter>
+        </parameter>
+    </parameters>
+    <services>
+        <defaults public="true" />
+
+        <service id="doctrine.metadata.driver.local" class="Doctrine\ORM\Mapping\Driver\XmlDriver">
+            <argument type="collection">
+                <argument>%gymlog.root_dir%/src/PortAdapters/Secondary/Persistence/Doctrine/Mapping/User</argument>
+                <argument>%gymlog.root_dir%/src/PortAdapters/Secondary/Persistence/Doctrine/Mapping/Exercise</argument>
+                <argument>%gymlog.root_dir%/src/PortAdapters/Secondary/Persistence/Doctrine/Mapping/Workout</argument>
+            </argument>
+            <argument type="string">.dcm.xml</argument>
+            <argument type="constant">true</argument>
+        </service>
+
+        <service id="doctrine.metadata.driver" class="Doctrine\Persistence\Mapping\Driver\MappingDriverChain">
+            <call method="addDriver">
+                <argument type="service" id="doctrine.metadata.driver.local"/>
+                <argument type="string">GymLog\Domain</argument>
+            </call>
+        </service>
+
+        <service id="doctrine.migrations.configuration" class="Doctrine\Migrations\Configuration\Migration\ConfigurationArray" public="true">
+            <argument type="collection">
+                <argument key="migrations_paths" type="collection">
+                    <argument key="GymLog\Migrations">%kernel.project_dir%/runtime/Doctrine/Migrations</argument>
+                </argument>
+                <argument key="table_storage" type="collection">
+                    <argument key="table_name">migrations</argument>
+                    <argument key="version_column_name">version</argument>
+                </argument>
+                <!-- Весь прогон одной транзакцией: либо накатились все миграции, либо ни одной. -->
+                <argument key="all_or_nothing" type="constant">true</argument>
+                <argument key="transactional" type="constant">true</argument>
+                <argument key="check_database_platform" type="constant">true</argument>
+                <argument key="organize_migrations">none</argument>
+            </argument>
+        </service>
+
+        <!--
+            Нативные lazy objects PHP 8.4 вместо сгенерированных Doctrine прокси.
+            По умолчанию выключены даже на 8.4 — без этого вызова ORM потребует
+            symfony/var-exporter либо proxyDir + proxyNamespace.
+        -->
+        <service id="doctrine.orm.configuration" class="Doctrine\ORM\Configuration">
+            <call method="setMetadataDriverImpl">
+                <argument type="service" id="doctrine.metadata.driver"/>
+            </call>
+            <call method="enableNativeLazyObjects">
+                <argument type="constant">true</argument>
+            </call>
+        </service>
+
+        <service id="doctrine.dbal.configuration" class="Doctrine\DBAL\Configuration"/>
+
+        <service id="doctrine.orm.connection" class="Doctrine\DBAL\Connection" public="true">
+            <factory class="Doctrine\DBAL\DriverManager" method="getConnection"/>
+            <argument>%db.psql.connection.master%</argument>
+            <argument type="service" id="doctrine.dbal.configuration"/>
+        </service>
+
+        <service id="doctrine.orm.entitymanager" class="Doctrine\ORM\EntityManager" public="true" lazy="true">
+            <argument type="service" id="doctrine.orm.connection"/>
+            <argument type="service" id="doctrine.orm.configuration"/>
+        </service>
+    </services>
+</container>

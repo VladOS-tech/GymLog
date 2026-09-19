@@ -1,0 +1,43 @@
+{
+    "name": "gymlog/api",
+    "description": "Gym Log API",
+    "type": "project",
+    "license": "proprietary",
+    "autoload": {
+        "psr-4": {
+            "GymLog\\": "src/",
+            "GymLog\\Migrations\\": "runtime/Doctrine/Migrations/"
+        }
+    },
+    "autoload-dev": {
+        "psr-4": {
+            "GymLog\\Test\\Unit\\": "tests/Unit"
+        }
+    },
+    "minimum-stability": "stable",
+    "prefer-stable": true,
+    "require": {
+        "php": "^8.4",
+        "ext-dom": "*",
+        "ext-json": "*",
+        "ext-pdo": "*",
+        "ext-simplexml": "*",
+
+        "doctrine/orm": "^3.3",
+        "doctrine/dbal": "^4.2",
+        "doctrine/migrations": "^3.8",
+
+        "ramsey/uuid": "^4.7",
+
+        "symfony/config": "^7.2",
+        "symfony/console": "^7.2",
+        "symfony/dependency-injection": "^7.2"
+    },
+    "require-dev": {
+        "phpunit/phpunit": "^11.5"
+    },
+    "config": {
+        "process-timeout": 900,
+        "sort-packages": true
+    }
+}

@@ -1,0 +1,7 @@
+.git
+.idea
+.claude
+vendor
+artifacts
+runtime/Symfony
+compose.override.yaml
