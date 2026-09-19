@@ -1,0 +1,36 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<container xmlns="http://symfony.com/schema/dic/services"
+           xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+           xsi:schemaLocation="http://symfony.com/schema/dic/services http://symfony.com/schema/dic/services/services-1.0.xsd">
+    <services>
+        <defaults public="true"/>
+
+        <!--
+            Адаптеры объявлены явно, без autowire: EntityManager зарегистрирован под
+            id doctrine.orm.entitymanager, а не под именем класса, и автоваеринг его
+            по тайп-хинту всё равно бы не нашёл.
+        -->
+        <service id="GymLog\PortAdapters\Secondary\Persistence\Doctrine\Repositories\DoctrineUserRepository">
+            <argument type="service" id="doctrine.orm.entitymanager"/>
+        </service>
+        <service id="GymLog\PortAdapters\Secondary\Persistence\Doctrine\Repositories\DoctrineExerciseRepository">
+            <argument type="service" id="doctrine.orm.entitymanager"/>
+        </service>
+        <service id="GymLog\PortAdapters\Secondary\Persistence\Doctrine\Repositories\DoctrineWorkoutRepository">
+            <argument type="service" id="doctrine.orm.entitymanager"/>
+        </service>
+
+        <!--
+            Алиасы порт -> адаптер. Именно они делают связку рабочей: Symfony резолвит
+            тайп-хинт только в сервис, чей id в точности равен типу (AutowirePass::
+            getAutowiredReference), и реализации по интерфейсу сам не ищет. Здесь же
+            меняется реализация целиком — например на InMemory* в тестах.
+        -->
+        <service id="GymLog\Domain\User\UserRepository"
+                 alias="GymLog\PortAdapters\Secondary\Persistence\Doctrine\Repositories\DoctrineUserRepository"/>
+        <service id="GymLog\Domain\Exercise\ExerciseRepository"
+                 alias="GymLog\PortAdapters\Secondary\Persistence\Doctrine\Repositories\DoctrineExerciseRepository"/>
+        <service id="GymLog\Domain\Workout\WorkoutRepository"
+                 alias="GymLog\PortAdapters\Secondary\Persistence\Doctrine\Repositories\DoctrineWorkoutRepository"/>
+    </services>
+</container>
